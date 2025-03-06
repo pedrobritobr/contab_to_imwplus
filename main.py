@@ -1,11 +1,11 @@
-from dotenv import load_dotenv
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 
+from config import Config
 from IMWPlus_WebPage import IMWPlus
+from BigQueryService import BigQueryService
 
-load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -17,15 +17,31 @@ def home():
 
 @app.route('/', methods=['POST'])
 def main():
+    config = Config()
+    app.config.from_object(config)
+
     data = request.get_json()
     user_login = data.get("user_login")
     user_password = data.get("user_password")
     
     imwPlus = IMWPlus(user_login, user_password)
-    title = imwPlus.login
-    return title
+
+    if not imwPlus.sucessful_login:
+        return jsonify({"error": "Login failed"}), 401
+
+    app.config["GCP_CREDS"] = config.get_gcp_credentials()
+    bigQueryService = BigQueryService()
+    inflow = bigQueryService.read_inflow()
+
+    return jsonify({"data": inflow})
 
 if __name__ == '__main__':
+    import os
+    import glob
+
+    for file in glob.glob("*.png"):
+        os.remove(file)
+
     payload = {
     }
 

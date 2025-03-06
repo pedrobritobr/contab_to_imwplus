@@ -1,4 +1,4 @@
-import os
+from flask import current_app
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,10 +12,10 @@ class IMWPlus:
     def __init__(self, username, password) -> None:
         self.username = username
         self.password = password
-        browserless_token = os.getenv("BROWSERLESS_TOKEN")
+        config = current_app.config
 
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.set_capability('browserless:token', browserless_token)
+        chrome_options.set_capability('browserless:token', config.get('BROWSERLESS_TOKEN'))
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--headless")
 
@@ -40,10 +40,7 @@ class IMWPlus:
         self.wait.until(EC.url_changes(imwplus_login_url))
 
         sucessful_url = "https://www.imwplus.com.br/app/"
-        if self.driver.current_url != sucessful_url:
-            self.driver.quit()
-            return "Login failed"
-        return "Login successful"
+        self.sucessful_login = self.driver.current_url == sucessful_url
 
     def wait_by_css_selector(self, selector):
         return self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, selector)))
