@@ -11,6 +11,10 @@ app = Flask(__name__)
 CORS(app)
 app.json.ensure_ascii=False
 
+@app.route('/', methods=['GET'])
+def home():
+    return "@pedrobritobr"
+
 @app.route('/', methods=['POST'])
 def main():
     data = request.get_json()
