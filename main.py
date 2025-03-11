@@ -3,7 +3,7 @@ from flask_cors import CORS
 import json
 
 from config import Config
-from IMWPlus_WebPage import IMWPlus
+from IMWPlus import IMWPlus, IMWLoginError
 from BigQueryService import BigQueryService
 
 
@@ -15,7 +15,7 @@ app.json.ensure_ascii=False
 def home():
     return "@pedrobritobr"
 
-@app.route('/', methods=['POST'])
+@app.route('/send_imwplus', methods=['POST'])
 def main():
     config = Config()
     app.config.from_object(config)
@@ -23,17 +23,20 @@ def main():
     data = request.get_json()
     user_login = data.get("user_login")
     user_password = data.get("user_password")
-    
-    imwPlus = IMWPlus(user_login, user_password)
 
-    if not imwPlus.sucessful_login:
-        return jsonify({"error": "Login failed"}), 401
+    try:
+        imwPlus = IMWPlus(user_login, user_password)
 
-    app.config["GCP_CREDS"] = config.get_gcp_credentials()
-    bigQueryService = BigQueryService()
-    inflow = bigQueryService.read_inflow()
+        app.config["GCP_CREDS"] = config.get_gcp_credentials()
+        bigQueryService = BigQueryService()
+        inflow = bigQueryService.read_inflow()
 
-    return jsonify({"data": inflow})
+        return jsonify({"data": inflow})
+    except IMWLoginError as e:
+        return jsonify({"error": str(e)}), 401
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Erro inesperado"}), 500
 
 if __name__ == '__main__':
     import os
@@ -46,7 +49,7 @@ if __name__ == '__main__':
     }
 
     response = app.test_client().post(
-        '/',
+        '/send_imwplus',
         data=json.dumps(payload),
         content_type='application/json'
     )
