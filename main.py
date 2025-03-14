@@ -28,10 +28,26 @@ def main():
         imwPlus = IMWPlus(user_login, user_password)
 
         app.config["GCP_CREDS"] = config.get_gcp_credentials()
-        bigQueryService = BigQueryService()
-        inflow = bigQueryService.read_inflow()
+        transactions = BigQueryService().get_transactions()
 
-        return jsonify({"data": inflow})
+        transactions_error = []
+        sucessfull_msg = "Atenção: Cadastro realizado com Sucesso!"
+        for t in transactions:
+            response = imwPlus.send_transaction(t)
+
+            if response != sucessfull_msg:
+                transactions_error.append({**t, "error": response})
+        
+        len_transactions_error = len(transactions_error)
+
+        if len_transactions_error != 0:
+            return jsonify({
+                "count_errors": f"{len_transactions_error}/{len(transactions)}",
+                "errors": transactions_error
+            }), 200
+
+        return jsonify({"success": "Todas as transações foram enviadas com sucesso"}), 200
+
     except IMWLoginError as e:
         return jsonify({"error": str(e)}), 401
     except Exception as e:

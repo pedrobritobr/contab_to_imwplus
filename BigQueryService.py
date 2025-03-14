@@ -31,51 +31,43 @@ class BigQueryService:
         except Exception as error:
             raise Exception(f"Failed to query table. {error}")
 
-    def read_inflow(self):
-        try:
-            query = f"""
-            SELECT
-                FORMAT_TIMESTAMP('%d/%m/%Y', date) AS data,
-                inflow_code as plano_conta,
-                description as titulo,
-                FORMAT('%0.2f', amount) AS valor
-            FROM
-                `{self.inflow_table}`
-            WHERE
-                EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND removed IS NOT TRUE
-            ORDER BY
-                date
-            """
+    def get_last_month_transactions_query(self, transaction_type):
+        transaction_map = {
+            "inflow": {
+                "table": self.inflow_table,
+                "column": "inflow_code"
+            },
+            "outflow": {
+                "table": self.outflow_table,
+                "column": "outflow_code"
+            }
+        }
 
-            result = self.query_table(query, [])
+        return f"""
+        SELECT
+            FORMAT_TIMESTAMP('%d/%m/%Y', date) AS data,
+            {transaction_map[transaction_type]["column"]} as plano_conta,
+            description as titulo,
+            REPLACE(FORMAT('%.2f', amount), '.', ',') AS valor
+        FROM
+            `{transaction_map[transaction_type]["table"]}`
+        WHERE
+            DATE(DATE_TRUNC(date, MONTH)) = DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH), MONTH)
+            AND removed IS NOT TRUE
+        """
+
+    def get_transactions(self):
+        try:
+            inflow_query = self.get_last_month_transactions_query("inflow")
+            outflow_query = self.get_last_month_transactions_query("outflow")
+            union_all_query = f"{inflow_query} UNION ALL {outflow_query} ORDER BY data"
+
+            result = self.query_table(union_all_query, [])
+
         except Exception as error:
             raise Exception(error)
-        
-        if not result:
-            raise NoDataFoundException()
-        return result
 
-    def read_outflow(self):
-        try:
-            query = f"""
-            SELECT
-                FORMAT_TIMESTAMP('%d/%m/%Y', date) AS data,
-                outflow_code as plano_conta,
-                description as titulo,
-                FORMAT('%0.2f', amount) AS valor
-            FROM
-                `{self.outflow_table}`
-            WHERE
-                EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND removed IS NOT TRUE
-            ORDER BY
-                date
-            """
-            result = self.query_table(query, [])
-        except Exception as error:
-            raise Exception(error)
-        
         if not result:
             raise NoDataFoundException()
+
         return result

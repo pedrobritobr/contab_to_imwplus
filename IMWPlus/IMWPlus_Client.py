@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-from codes import codes
+from IMWPlus.codes import codes
 
 
 class IMWLoginError(Exception):
@@ -46,6 +46,7 @@ class IMWPlus:
 
         transaction = {
             "caixa_id": 591,
+            "tipo_lancamento": "E" if transaction_chart.startswith("1") else "S",
             "valor": transaction_data.get("valor"),
             "data_lancamento": transaction_data.get("data"),
             "plano_conta_id": codes[transaction_chart],
@@ -53,20 +54,21 @@ class IMWPlus:
             "pagante_favorecido_cpf_cnpj": transaction_data.get("titulo"),
         }
 
-        if transaction_chart.startswith("1"):
-            transaction["tipo_lancamento"] = "E"
-
         return transaction
 
-    def post_transaction(self, transaction_data):
-        headers = {
-            "content-type": "multipart/form-data; boundary=",
-        }
-        post_url = "https://www.imwplus.com.br/app/financeiro-lancamento/"
+    def send_transaction(self, transaction_data):
+        try:
+            headers = {
+                "content-type": "multipart/form-data; boundary=",
+            }
+            post_url = "https://www.imwplus.com.br/app/financeiro-lancamento/"
 
-        transaction_data = self.__build_transaction_dict(transaction_data)
-        transaction_data = self.__generate_form_data(transaction_data)
+            transaction_data = self.__build_transaction_dict(transaction_data)
+            transaction_data = self.__generate_form_data(transaction_data)
 
-        response = self.session.post(post_url, headers=headers, data=transaction_data)
-        alert_message = self.__find_text_from_class(response.text, 'alert-message')
-        print(alert_message)
+            response = self.session.post(post_url, headers=headers, data=transaction_data)
+            alert_message = self.__find_text_from_class(response.text, 'alert-message')
+
+            return alert_message
+        except Exception as error:
+            return f"Erro ao enviar transação: {error}"

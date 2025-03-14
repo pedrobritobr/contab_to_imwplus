@@ -1,1 +1,1 @@
-from IMWPlus_Client import IMWPlus, IMWLoginError
+from IMWPlus.IMWPlus_Client import IMWPlus, IMWLoginError
