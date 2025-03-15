@@ -31,7 +31,7 @@ class BigQueryService:
         except Exception as error:
             raise Exception(f"Failed to query table. {error}")
 
-    def get_last_month_transactions_query(self, transaction_type):
+    def get_transactions_from_month_query(self, transaction_type, transactions_month):
         transaction_map = {
             "inflow": {
                 "table": self.inflow_table,
@@ -52,17 +52,29 @@ class BigQueryService:
         FROM
             `{transaction_map[transaction_type]["table"]}`
         WHERE
-            DATE(DATE_TRUNC(date, MONTH)) = DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH), MONTH)
+            DATE(DATE_TRUNC(date, MONTH)) = PARSE_DATE("%Y-%m", "{transactions_month}")
             AND removed IS NOT TRUE
         """
 
-    def get_transactions(self):
+    def get_transactions(self, transactions):
         try:
-            inflow_query = self.get_last_month_transactions_query("inflow")
-            outflow_query = self.get_last_month_transactions_query("outflow")
-            union_all_query = f"{inflow_query} UNION ALL {outflow_query} ORDER BY data"
+            transactions_type = transactions.get("type")
+            transactions_month = transactions.get("month")
 
-            result = self.query_table(union_all_query, [])
+            if transactions_type not in ["inflow", "outflow", "all"]:
+                raise ValueError("Invalid transactions type")
+
+            inflow_query = self.get_transactions_from_month_query("inflow", transactions_month)
+            outflow_query = self.get_transactions_from_month_query("outflow", transactions_month)
+
+            queries = {
+                "all": f"{inflow_query} UNION ALL {outflow_query} ORDER BY data",
+                "inflow": inflow_query,
+                "outflow": outflow_query
+            }
+
+            query = queries.get(transactions_type)
+            result = self.query_table(query, [])
 
         except Exception as error:
             raise Exception(error)

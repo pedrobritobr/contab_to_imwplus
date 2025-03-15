@@ -7,7 +7,7 @@ load_dotenv()
 
 class Config:
     def __init__(self):
-        self.GCP_CREDS = os.environ.get('GCP_CREDENTIALS')
+        self.GCP_CREDS = os.environ.get('GCP_CREDS')
         self.TABLE_AMBIENT = os.environ.get('TABLE_AMBIENT')
         self.DATASET_ID = os.environ.get('DATASET_ID')
         self.PROJECT_ID = os.environ.get('PROJECT_ID')

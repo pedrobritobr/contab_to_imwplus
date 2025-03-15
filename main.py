@@ -21,14 +21,25 @@ def main():
     app.config.from_object(config)
 
     data = request.get_json()
-    user_login = data.get("user_login")
-    user_password = data.get("user_password")
+    imwplus_login = data.get("imwplus_login")
+
+    if not imwplus_login:
+        return jsonify({"error": "Dados de login não informados"}), 400
+
+    user_login = imwplus_login.get("user_login")
+    user_password = imwplus_login.get("user_password")
+
+    if not user_login or not user_password:
+        return jsonify({"error": "Dados de login não informados"}), 400
+
+    transactions = data.get("transactions")
 
     try:
         imwPlus = IMWPlus(user_login, user_password)
 
-        app.config["GCP_CREDS"] = config.get_gcp_credentials()
-        transactions = BigQueryService().get_transactions()
+        if isinstance(transactions, dict):
+            app.config["GCP_CREDS"] = config.get_gcp_credentials()
+            transactions = BigQueryService().get_transactions(transactions)
 
         transactions_error = []
         sucessfull_msg = "Atenção: Cadastro realizado com Sucesso!"
@@ -62,6 +73,16 @@ if __name__ == '__main__':
         os.remove(file)
 
     payload = {
+        "imwplus_login": {
+        },
+        "transactions" : {
+            "type": "all",
+            "month": "2025-03"
+        },
+        # "transactions": [
+        #     {'data': '01/02/2025', 'plano_conta': '1.01.01 - Dizimo dos Membros', 'titulo': 'teste', 'valor': '1'},
+        #     {'data': '04/02/2025', 'plano_conta': '1.02.01 - Oferta de Culto', 'titulo': 'teste', 'valor': '1'},
+        # ]
     }
 
     response = app.test_client().post(
