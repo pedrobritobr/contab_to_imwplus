@@ -71,4 +71,6 @@ class IMWPlus:
 
             return alert_message
         except Exception as error:
-            return f"Erro ao enviar transação: {error}"
+            error_class = error.__class__.__name__
+            error_msg = f"Erro ao enviar {transaction_data} | {error_class} | {str(error)}"
+            return error_msg
