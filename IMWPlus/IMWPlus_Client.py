@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-from IMWPlus.codes import codes
+from IMWPlus.codes import accounting_entry_codes, transaction_ids
 
 
 class IMWLoginError(Exception):
@@ -43,13 +43,14 @@ class IMWPlus:
 
     def __build_transaction_dict(self, transaction_data):
         transaction_chart = transaction_data.get("plano_conta")
+        payment_method = transaction_data.get("payment_method")
 
         transaction = {
-            "caixa_id": 591,
+            "caixa_id": transaction_ids[payment_method],
             "tipo_lancamento": "E" if transaction_chart.startswith("1") else "S",
             "valor": transaction_data.get("valor"),
             "data_lancamento": transaction_data.get("data"),
-            "plano_conta_id": codes[transaction_chart],
+            "plano_conta_id": accounting_entry_codes[transaction_chart],
             "tipo_pagante_beneficiario": "outros",
             "pagante_favorecido_cpf_cnpj": transaction_data.get("titulo"),
         }
