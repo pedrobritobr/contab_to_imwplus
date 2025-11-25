@@ -16,12 +16,12 @@ def home():
     return "@pedrobritobr"
 
 @app.route('/send_imwplus', methods=['POST'])
-def main():
+def send_imwplus():
     config = Config()
     app.config.from_object(config)
 
-    data = request.get_json()
-    imwplus_login = data.get("imwplus_login")
+    payload = request.get_json()
+    imwplus_login = payload.get("imwplus_login")
 
     if not imwplus_login:
         return jsonify({"error": "Dados de login não informados"}), 400
@@ -32,7 +32,7 @@ def main():
     if not user_login or not user_password:
         return jsonify({"error": "Dados de login não informados"}), 400
 
-    transactions = data.get("transactions")
+    transactions = payload.get("transactions")
 
     try:
         imwPlus = IMWPlus(user_login, user_password)
@@ -43,12 +43,13 @@ def main():
 
         transactions_error = []
         sucessfull_msg = "Atenção: Cadastro realizado com Sucesso!"
-        for t in transactions:
+        for i, t in enumerate(transactions):
             response = imwPlus.send_transaction(t)
+            print(f"[{i}/{len(transactions)}] {list(t.values())} {response}")
 
             if response != sucessfull_msg:
                 transactions_error.append({**t, "error": response})
-        
+
         len_transactions_error = len(transactions_error)
 
         if len_transactions_error != 0:
