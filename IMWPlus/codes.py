@@ -1,4 +1,4 @@
-codes = {
+inflow_codes = {
     "1.01.01 - Dizimo dos Membros": 4 ,
     "1.01.02 - Dizimo dos Congregados": 5 ,
     "1.01.07 - Dízimo dos Clérigos (100 conforme FIW 2022/2023)": 110186 ,
@@ -250,4 +250,9 @@ outflow_codes = {
     "2.20.99 - DISTRITOS - Outras despesas": 228
 }
 
-codes = { **codes, **outflow_codes }
+accounting_entry_codes = { **inflow_codes, **outflow_codes }
+
+transaction_ids = {
+    "pix": 4857 ,
+    "dinheiro": 591 ,
+}
