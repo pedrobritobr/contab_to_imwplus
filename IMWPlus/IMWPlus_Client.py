@@ -75,3 +75,51 @@ class IMWPlus:
             error_class = error.__class__.__name__
             error_msg = f"Erro ao enviar {transaction_data} | {error_class} | {str(error)}"
             return error_msg
+
+    def delete_transaction(self, transaction_id):
+        delete_url = f"https://www.imwplus.com.br/app/financeiro-lancamento/delete/{transaction_id}"
+        response = self.session.get(delete_url)
+        alert_message = self.__find_text_from_class(response.text, 'alert-message')
+
+        return alert_message
+
+    def get_transactions_from_page(self):
+        url = "https://www.imwplus.com.br/app/financeiro-lancamento"
+        resp = self.session.get(url)
+        resp.raise_for_status()
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        data = []
+        for tr in soup.select("tr"):
+            tds = tr.select("td")
+            if not tds:
+                continue
+
+            texts = [td.get_text(strip=True) for td in tds if td.get_text(strip=True) != "-" and td.get_text(strip=True) != ""]
+
+            action_td = tr.select_one("td.table-action a[title*=apagar i]")
+            texts.append(action_td["href"].lstrip("#") if action_td else None)
+
+            if len(texts) >= 4:
+                texts.pop(1)
+
+                data.append({
+                    "data": texts[0],
+                    "valor": texts[1],
+                    "plano_conta": texts[2],
+                    "titulo": texts[3],
+                    "id": texts[4]
+                })
+
+        return data
+
+if __name__ == "__main__":
+    imwPlus = IMWPlus("login", "senha")
+
+    transactions = imwPlus.get_transactions_from_page()
+    transactions_ids = [t["id"] for t in transactions]
+
+    for transaction_id in transactions_ids:
+        response = imwPlus.delete_transaction(transaction_id)
+        print(f"Deletado {transaction_id}: {response}")
