@@ -48,6 +48,7 @@ class BigQueryService:
             FORMAT_TIMESTAMP('%d/%m/%Y', date) AS data,
             {transaction_map[transaction_type]["column"]} as plano_conta,
             description as titulo,
+            payment_method," if transaction_type == "inflow" else "'dinheiro' as payment_method,"}
             REPLACE(FORMAT('%.2f', amount), '.', ',') AS valor
         FROM
             `{transaction_map[transaction_type]["table"]}`
