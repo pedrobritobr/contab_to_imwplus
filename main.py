@@ -45,7 +45,7 @@ def send_imwplus():
         sucessfull_msg = "Atenção: Cadastro realizado com Sucesso!"
         for i, t in enumerate(transactions):
             response = imwPlus.send_transaction(t)
-            print(f"[{i}/{len(transactions)}] {list(t.values())} {response}")
+            print(f"[{i+1}/{len(transactions)}] {list(t.values())} {response}")
 
             if response != sucessfull_msg:
                 transactions_error.append({**t, "error": response})
@@ -69,20 +69,26 @@ def send_imwplus():
 if __name__ == '__main__':
     import os
     import glob
+    from dotenv import load_dotenv
+
+    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+    # GCP_CREDS = os.getenv("GCP_CREDS")
+    # print("Valor da chave GCP_CREDS:", GCP_CREDS)
 
     for file in glob.glob("*.png"):
         os.remove(file)
 
     payload = {
         "imwplus_login": {
+            "user_login": os.environ.get('IMW_PLUS_LOGIN'),
+            "user_password": os.environ.get('IMW_PLUS_PASSWORD')
         },
         "transactions" : {
             "type": "all",
-            "month": "2025-03"
+            "month": "2025-10"
         },
         # "transactions": [
-        #     {'data': '01/02/2025', 'plano_conta': '1.01.01 - Dizimo dos Membros', 'titulo': 'teste', 'valor': '1'},
-        #     {'data': '04/02/2025', 'plano_conta': '1.02.01 - Oferta de Culto', 'titulo': 'teste', 'valor': '1'},
+        #     {"data": "01/06/2025", "plano_conta":"2.17.10 - MINISTÉRIOS - Santa Ceia", "titulo":"Elementos da Ceia", "valor":"31,28" }
         # ]
     }
 
@@ -91,6 +97,6 @@ if __name__ == '__main__':
         data=json.dumps(payload),
         content_type='application/json'
     )
-    
+
     print("Status Code:", response.status_code)
     print("Response Data:", response.get_data(as_text=True))

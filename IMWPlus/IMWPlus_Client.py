@@ -115,7 +115,14 @@ class IMWPlus:
         return data
 
 if __name__ == "__main__":
-    imwPlus = IMWPlus("login", "senha")
+    import os
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+    user_login = os.environ.get('IMW_PLUS_LOGIN')
+    user_password = os.environ.get('IMW_PLUS_PASSWORD')
+
+    imwPlus = IMWPlus(user_login, user_password)
 
     transactions = imwPlus.get_transactions_from_page()
     transactions_ids = [t["id"] for t in transactions]
