@@ -254,5 +254,5 @@ accounting_entry_codes = { **inflow_codes, **outflow_codes }
 
 transaction_ids = {
     "pix": 4857 ,
-    "dinheiro": 591 ,
+    "cash": 591 ,
 }
