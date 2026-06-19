@@ -66,6 +66,35 @@ def send_imwplus():
         print(e)
         return jsonify({"error": "Erro inesperado"}), 500
 
+
+@app.route('/cash_flow', methods=['GET'])
+def collect_cash_flow():
+    config = Config()
+    app.config.from_object(config)
+
+    payload = request.get_json()
+    imwplus_login = payload.get("imwplus_login")
+
+    if not imwplus_login:
+        return jsonify({"error": "Dados de login não informados"}), 400
+
+    user_login = imwplus_login.get("user_login")
+    user_password = imwplus_login.get("user_password")
+
+    if not user_login or not user_password:
+        return jsonify({"error": "Dados de login não informados"}), 400
+
+    try:
+        imwPlus = IMWPlus(user_login, user_password)
+        cash_flow = imwPlus.get_cash_flow()
+        return jsonify(cash_flow), 200
+    except IMWLoginError as e:
+        return jsonify({"error": str(e)}), 401
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Erro inesperado"}), 500
+
+
 if __name__ == '__main__':
     import os
     import glob
