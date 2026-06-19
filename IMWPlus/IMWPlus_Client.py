@@ -1,5 +1,5 @@
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, element
 
 from IMWPlus.codes import accounting_entry_codes, transaction_ids
 
@@ -57,6 +57,10 @@ class IMWPlus:
 
         return transaction
 
+    def __get_first_and_last_text(self, elements: element.Tag):
+        ths = elements.select("th")
+        return [ths[i].get_text(strip=True) for i in (1, -1)]
+
     def send_transaction(self, transaction_data):
         try:
             headers = {
@@ -113,6 +117,21 @@ class IMWPlus:
                 })
 
         return data
+
+    def get_cash_flow(self):
+        url = "https://www.imwplus.com.br/app/financeiro-consolidar-caixa"
+        resp = self.session.get(url)
+        resp.raise_for_status()
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        rows = soup.select("tr")
+
+        header = self.__get_first_and_last_text(rows[0])
+        value = self.__get_first_and_last_text(rows[-2])
+
+        return dict(zip(header, value))
+
 
 if __name__ == "__main__":
     import os
