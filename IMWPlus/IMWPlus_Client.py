@@ -109,7 +109,7 @@ class IMWPlus:
                     "valor": texts[1],
                     "plano_conta": texts[2],
                     "titulo": texts[3],
-                    "id": texts[4]
+                    "id": texts[-1]
                 })
 
         return data
